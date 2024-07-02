@@ -1436,7 +1436,7 @@ def random_bytes(n):
         description: Bytes.
     """
 
-    n = min(n, 100 * 1024)  # set 100KB limit
+    # n = min(n, 100 * 1024)  # set 100KB limit
 
     params = CaseInsensitiveDict(request.args.items())
     if "seed" in params:
@@ -1445,7 +1445,7 @@ def random_bytes(n):
     response = make_response()
 
     # Note: can't just use os.urandom here because it ignores the seed
-    response.data = bytearray(random.randint(0, 255) for i in range(n))
+    response.data = os.urandom(n)
     response.content_type = "application/octet-stream"
     return response
 
@@ -1466,7 +1466,7 @@ def stream_random_bytes(n):
       200:
         description: Bytes.
     """
-    n = min(n, 100 * 1024)  # set 100KB limit
+    # n = min(n, 100 * 1024)  # set 100KB limit
 
     params = CaseInsensitiveDict(request.args.items())
     if "seed" in params:
@@ -1478,16 +1478,8 @@ def stream_random_bytes(n):
         chunk_size = 10 * 1024
 
     def generate_bytes():
-        chunks = bytearray()
-
-        for i in xrange(n):
-            chunks.append(random.randint(0, 255))
-            if len(chunks) == chunk_size:
-                yield (bytes(chunks))
-                chunks = bytearray()
-
-        if chunks:
-            yield (bytes(chunks))
+      for i in xrange(int(n / chunk_size)):
+        yield (os.urandom(chunk_size))
 
     headers = {"Content-Type": "application/octet-stream"}
 
